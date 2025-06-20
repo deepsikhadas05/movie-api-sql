@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🎥 Movie Recommender</title>
+  <style>
+  :root {
+    --bg-dark: #121212;
+    --bg-box: #1e1e2e;
+    --accent-purple: #bb86fc;
+    --accent-pink: #ff79c6;
+    --text-light: #f8f8f2;
+    --btn-hover: #8e44ad;
+  }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-light);
+    margin: 0;
+    padding: 40px;
+  }
+
+  h1, h2 {
+    text-align: center;
+    color: var(--accent-purple);
+  }
+
+  .container {
+    max-width: 800px;
+    margin: auto;
+    background: var(--bg-box);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 25px rgba(187, 134, 252, 0.3);
+  }
+
+  button {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    background: linear-gradient(45deg, var(--accent-purple), var(--accent-pink));
+    color: #fff;
+    border-radius: 8px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  button:hover {
+    background: var(--btn-hover);
+  }
+
+  .section {
+    display: none;
+    margin-top: 30px;
+    animation: fadeIn 0.4s ease-in;
+  }
+
+  label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+    color: var(--accent-pink);
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    background: #2c2c3e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: var(--text-light);
+    font-size: 14px;
+  }
+
+  .output {
+    background: #1a1a26;
+    padding: 15px;
+    border-radius: 10px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--text-light);
+    border-left: 4px solid var(--accent-purple);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎥 Movie Recommender</h1>
+
+    <button onclick="toggleSection('listSection')">🎬 Show Movie List</button>
+    <button onclick="toggleSection('addSection')">➕ Add Movie</button>
+    <button onclick="toggleSection('recommendSection')">🎲 Suggest a Movie</button>
+
+    <!-- Movie List -->
+    <div id="listSection" class="section">
+      <h2>🎬 All Movies</h2>
+      <button onclick="getMovies()">🔄 Refresh</button>
+      <div id="movieList" class="output">Loading...</div>
+    </div>
+
+    <!-- Add Movie -->
+    <div id="addSection" class="section">
+      <h2>➕ Add a Movie</h2>
+      <label>Title</label>
+      <input id="title" placeholder="e.g. Barfi" />
+      <label>Genre</label>
+      <input id="genre" placeholder="e.g. Comedy" />
+      <label>Mood</label>
+      <input id="mood" placeholder="e.g. feel-good" />
+      <label>Release Year</label>
+      <input id="year" type="number" placeholder="e.g. 2012" />
+      <label>Rating</label>
+      <input id="rating" type="number" step="0.1" placeholder="e.g. 8.5" />
+      <button onclick="addMovie()">Submit</button>
+    </div>
+
+    <!-- Recommend Movie -->
+    <div id="recommendSection" class="section">
+      <h2>🎲 Recommend a Movie</h2>
+      <label>Mood (optional)</label>
+      <input id="reMood" placeholder="e.g. inspiring" />
+      <label>Genre (optional)</label>
+      <input id="reGenre" placeholder="e.g. Drama" />
+      <button onclick="recommendMovie()">Get Recommendation</button>
+      <div id="recommendBox" class="output"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/movies';
+
+    function toggleSection(id) {
+      document.querySelectorAll('.section').forEach(sec => {
+        sec.style.display = 'none';
+      });
+      document.getElementById(id).style.display = 'block';
+
+      if (id === 'listSection') getMovies();
+    }
+
+    function getMovies() {
+      fetch(API)
+        .then(res => res.json())
+        .then(data => {
+          const output = data.map(m =>
+            `🎬 ${m.title} (${m.release_year})\n📂 Genre: ${m.genre}\n💫 Mood: ${m.mood}\n⭐ Rating: ${m.rating}`
+          ).join('\n-----------------------------\n');
+          document.getElementById('movieList').textContent = output || 'No movies available.';
+        });
+    }
+
+    function addMovie() {
+      const movie = {
+        title: document.getElementById('title').value,
+        genre: document.getElementById('genre').value,
+        mood: document.getElementById('mood').value,
+        release_year: document.getElementById('year').value,
+        rating: document.getElementById('rating').value
+      };
+      fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(movie)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("✅ Movie added!");
+        toggleSection('listSection');
+      });
+    }
+
+    function recommendMovie() {
+      const mood = document.getElementById('reMood').value;
+      const genre = document.getElementById('reGenre').value;
+      let url = `${API}/recommend`;
+      const params = [];
+      if (mood) params.push(`mood=${encodeURIComponent(mood)}`);
+      if (genre) params.push(`genre=${encodeURIComponent(genre)}`);
+      if (params.length > 0) url += '?' + params.join('&');
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.title) {
+            document.getElementById('recommendBox').textContent =
+              `🎬 ${data.title} (${data.release_year})\n📂 Genre: ${data.genre}\n💫 Mood: ${data.mood}\n⭐ Rating: ${data.rating}`;
+          } else {
+            document.getElementById('recommendBox').textContent = '⚠️ No matching movie found.';
+          }
+        });
+    }
+  </script>
+</body>
+</html>
