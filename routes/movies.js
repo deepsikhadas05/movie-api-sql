@@ -1,52 +1,69 @@
 const express = require('express');
 
-module.exports = (db) => {
-  const router = express.Router();
-
-  // Get all movies
-  router.get('/', (req, res) => {
+// Route Handlers as Named Functions
+function getAllMovies(db) {
+  return (req, res) => {
     db.query('SELECT * FROM movies', (err, results) => {
-      if (err) return res.status(500).json({ error: err });
+      if (err) {
+        console.error("❌ DB Error:", err);
+        return res.status(500).json({ error: 'Database error' });
+      }
       res.json(results);
     });
-  });
+  };
+}
 
-  // Add a new movie
-  router.post('/', (req, res) => {
+function addMovie(db) {
+  return (req, res) => {
     const { title, genre, mood, release_year, rating } = req.body;
     db.query(
       'INSERT INTO movies (title, genre, mood, release_year, rating) VALUES (?, ?, ?, ?, ?)',
       [title, genre, mood, release_year, rating],
       (err, result) => {
         if (err) return res.status(500).json({ error: err });
-        res.status(201).json({ id: result.insertId });
+        res.status(201).json({ message: 'Movie added', id: result.insertId });
       }
     );
-  });
+  };
+}
 
-  // Update a movie
-  router.put('/:id', (req, res) => {
+function updateMovie(db) {
+  return (req, res) => {
     const { title, genre, mood, release_year, rating } = req.body;
     db.query(
       'UPDATE movies SET title=?, genre=?, mood=?, release_year=?, rating=? WHERE id=?',
       [title, genre, mood, release_year, rating, req.params.id],
       (err, result) => {
-        if (err) return res.status(500).json({ error: err });
-        res.json({ updated: result.affectedRows });
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (result.affectedRows === 0) {
+  return res.status(404).json({ error: 'Movie not found' });
+}
+res.status(200).json({ message: 'Movie updated' });
+
+
       }
     );
-  });
+  };
+}
 
-  // Delete a movie
-  router.delete('/:id', (req, res) => {
-    db.query('DELETE FROM movies WHERE id=?', [req.params.id], (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json({ deleted: result.affectedRows });
+function deleteMovieById(db) {
+  return (req, res) => {
+    const { id } = req.params;
+    db.query('DELETE FROM movies WHERE id = ?', [id], (err, result) => {
+      if (err) {
+        console.error("❌ DB Error:", err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Movie not found' });
+      }
+      res.status(200).json({ message: 'Movie deleted' });
     });
-  });
+  };
+}
 
-  // Recommend random movie by mood/genre
-  router.get('/recommend', (req, res) => {
+function recommendMovie(db) {
+  return (req, res) => {
     const { mood, genre } = req.query;
     let query = 'SELECT * FROM movies';
     const filters = [];
@@ -72,7 +89,23 @@ module.exports = (db) => {
       if (results.length === 0) return res.status(404).json({ message: 'No match found' });
       res.json(results[0]);
     });
-  });
+  };
+}
 
+// Export Router with Handlers Bound to DB
+module.exports = (db) => {
+  const router = express.Router();
+  router.get('/', getAllMovies(db));
+  router.post('/', addMovie(db));
+  router.put('/:id', updateMovie(db));
+  router.delete('/:id', deleteMovieById(db));
+  router.get('/recommend', recommendMovie(db));
   return router;
 };
+
+// Export Functions for Unit Testing
+module.exports.getAllMovies = getAllMovies;
+module.exports.addMovie = addMovie;
+module.exports.updateMovie = updateMovie;
+module.exports.deleteMovieById = deleteMovieById;
+module.exports.recommendMovie = recommendMovie;
