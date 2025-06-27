@@ -87,7 +87,7 @@ DELETE	/api/movies/:id	Delete a movie (optional)
 - 📊 See test report below:
   
 
-![Test Report Screenshot](./test-report-screenshots.png)
+![Test Report Screenshot](./test-report-screenshots)
 
 ### 📂 CI/CD Configuration
 See the [CI/CD Workflow](.github/workflows/keploy.yml)
