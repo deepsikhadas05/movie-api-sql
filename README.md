@@ -80,6 +80,21 @@ DELETE	/api/movies/:id	Delete a movie (optional)
 
 ---
 
+## ✅ API Testing with Keploy + CI/CD (Day 4)
+
+- 🔁 Automated API Testing using Keploy and GitHub Actions
+- 🧪 Triggered on every push/pull to `main`
+- 📊 See test report below:
+  
+
+![Test Report Screenshot](./test-report-screenshots.png)
+
+### 📂 CI/CD Configuration
+See the [CI/CD Workflow](.github/workflows/keploy.yml)
+
+
+---
+
 ### 🙌 Acknowledgements
 Built with ❤️ using:
 
