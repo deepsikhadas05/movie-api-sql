@@ -1,6 +1,15 @@
 const express = require('express');
 
-// Route Handlers as Named Functions
+/**
+ * @swagger
+ * /api/movies:
+ *   get:
+ *     summary: Get all movies
+ *     tags: [Movies]
+ *     responses:
+ *       200:
+ *         description: List of all movies
+ */
 function getAllMovies(db) {
   return (req, res) => {
     db.query('SELECT * FROM movies', (err, results) => {
@@ -13,6 +22,33 @@ function getAllMovies(db) {
   };
 }
 
+/**
+ * @swagger
+ * /api/movies:
+ *   post:
+ *     summary: Add a new movie
+ *     tags: [Movies]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               genre:
+ *                 type: string
+ *               mood:
+ *                 type: string
+ *               release_year:
+ *                 type: integer
+ *               rating:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Movie added
+ */
 function addMovie(db) {
   return (req, res) => {
     const { title, genre, mood, release_year, rating } = req.body;
@@ -27,6 +63,41 @@ function addMovie(db) {
   };
 }
 
+/**
+ * @swagger
+ * /api/movies/{id}:
+ *   put:
+ *     summary: Update a movie by ID
+ *     tags: [Movies]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               genre:
+ *                 type: string
+ *               mood:
+ *                 type: string
+ *               release_year:
+ *                 type: integer
+ *               rating:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Movie updated
+ *       404:
+ *         description: Movie not found
+ */
 function updateMovie(db) {
   return (req, res) => {
     const { title, genre, mood, release_year, rating } = req.body;
@@ -36,16 +107,32 @@ function updateMovie(db) {
       (err, result) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (result.affectedRows === 0) {
-  return res.status(404).json({ error: 'Movie not found' });
-}
-res.status(200).json({ message: 'Movie updated' });
-
-
+          return res.status(404).json({ error: 'Movie not found' });
+        }
+        res.status(200).json({ message: 'Movie updated' });
       }
     );
   };
 }
 
+/**
+ * @swagger
+ * /api/movies/{id}:
+ *   delete:
+ *     summary: Delete a movie by ID
+ *     tags: [Movies]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Movie deleted
+ *       404:
+ *         description: Movie not found
+ */
 function deleteMovieById(db) {
   return (req, res) => {
     const { id } = req.params;
@@ -62,6 +149,27 @@ function deleteMovieById(db) {
   };
 }
 
+/**
+ * @swagger
+ * /api/movies/recommend:
+ *   get:
+ *     summary: Recommend a movie by mood or genre
+ *     tags: [Movies]
+ *     parameters:
+ *       - in: query
+ *         name: mood
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A recommended movie
+ *       404:
+ *         description: No match found
+ */
 function recommendMovie(db) {
   return (req, res) => {
     const { mood, genre } = req.query;

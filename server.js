@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const swaggerSetup = require('./swagger'); // ✅ Swagger Setup File
+const movieRoutes = require('./routes/movies'); // ✅ Movie Routes
 
 const app = express();
 
@@ -19,16 +21,21 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-  if (err) throw err;
+  if (err) {
+    console.error('❌ MySQL connection error:', err);
+    process.exit(1);
+  }
   console.log('✅ MySQL Connected');
 });
 
-// API Routes
-app.use('/api/movies', require('./routes/movies')(db));
+// Mount API Routes
+app.use('/api/movies', movieRoutes(db));
+
+// Swagger Setup (Must come after routes)
+swaggerSetup(app);
 
 // Start Server (only if not in test environment)
 const PORT = process.env.PORT || 3000;
-
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 }
